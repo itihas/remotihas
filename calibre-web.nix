@@ -1,6 +1,6 @@
 localFlake:
 
 {lib, config, self, inputs, ...}: {
-  flake.nixosModule-web = {config, lib, pkgs, ...}: {
+  flake.nixosModule.calibre-web = {config, lib, pkgs, ...}: {
   };
 }

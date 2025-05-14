@@ -1,6 +1,6 @@
 localFlake:
 
 {lib, config, self, inputs, ...}: {
-  flake.nixosModule = {config, lib, pkgs, ...}: {
+  flake.nixosModule.caldav = {config, lib, pkgs, ...}: {
   };
 }
