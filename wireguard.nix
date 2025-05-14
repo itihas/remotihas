@@ -1,7 +1,7 @@
 localFlake:
 
 { lib, config, self, inputs, ... }: {
-  flake.nixosModule.wireguard = { config, lib, pkgs, ... }: {
+  flake.nixosModules.wireguard = { config, lib, pkgs, ... }: {
     # enable NAT
     networking.nat.enable = true;
     networking.nat.externalInterface = "eth0";

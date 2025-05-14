@@ -13,18 +13,20 @@
     ({ self, withSystem, ... }:
       let
         inherit (inputs.flake-parts.lib) importApply;
-        mkFlakeModules = {
+        myFlakeModules = {
           gitit = importApply ./gitit.nix { inherit withSystem; };
           archivebox = importApply ./archivebox.nix { inherit withSystem; };
           caldav = importApply ./caldav.nix { inherit withSystem; };
           wireguard = importApply ./wireguard.nix { inherit withSystem; };
           calibre-web = importApply ./calibre-web.nix { inherit withSystem; };
+          itihas = importApply ./itihas.nix { inherit withSystem; };
         };
       in {
-        imports = [
+        imports = with myFlakeModules; [
           inputs.flake-parts.flakeModules.flakeModules
-          mkFlakeModules.gitit
-          mkFlakeModules.wireguard
+          gitit
+          wireguard
+          itihas
         ];
         systems = [ "x86_64-linux" ];
         flake.nixosModules.myFormats = { config, ... }: {
@@ -45,7 +47,7 @@
             virtualisation.forwardPorts = [
               {
                 from = "host";
-                host.port = 2000;
+                host.port = 2022;
                 guest.port = 22;
               }
               {
@@ -63,7 +65,7 @@
           };
         };
 
-        flake = { flakeModules = mkFlakeModules; };
+        flake = { flakeModules = myFlakeModules; };
 
         flake.nixosConfigurations.remotihas = withSystem "x86_64-linux"
           ({ config, system, ... }:
@@ -72,6 +74,7 @@
                 gitit
                 wireguard
                 myFormats
+                itihas
                 ({ config, lib, pkgs, ... }: {
                   nixpkgs.hostPlatform = system;
                   services.gitit = {
