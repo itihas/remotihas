@@ -6,6 +6,7 @@
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    
   };
 
   outputs = inputs:
@@ -20,6 +21,7 @@
           wireguard = importApply ./wireguard.nix { inherit withSystem; };
           calibre-web = importApply ./calibre-web.nix { inherit withSystem; };
           itihas = importApply ./itihas.nix { inherit withSystem; };
+          remotihas = importApply ./remotihas.nix { inherit withSystem; };
         };
       in {
         imports = with myFlakeModules; [
@@ -27,6 +29,7 @@
           gitit
           wireguard
           itihas
+          remotihas
         ];
         systems = [ "x86_64-linux" ];
         flake.nixosModules.myFormats = { config, ... }: {
@@ -60,6 +63,11 @@
                 host.port = 2443;
                 guest.port = 443;
               }
+              {
+                from = "host";
+                host.port = 2120;
+                guest.port = 58120;
+              }
             ];
             users.users.root.password = "abc";
           };
@@ -67,33 +75,5 @@
 
         flake = { flakeModules = myFlakeModules; };
 
-        flake.nixosConfigurations.remotihas = withSystem "x86_64-linux"
-          ({ config, system, ... }:
-            inputs.nixpkgs.lib.nixosSystem {
-              modules = with self.nixosModules; [
-                gitit
-                wireguard
-                myFormats
-                itihas
-                ({ config, lib, pkgs, ... }: {
-                  nixpkgs.hostPlatform = system;
-                  services.gitit = {
-                    enable = true;
-                    nginx = {
-                      enable = true;
-                      hostName = "gitit.${config.networking.hostName}";
-                    };
-                  };
-                  services.privatebin = {
-                    enable = true;
-                    enableNginx = true;
-                    virtualHost = "paste.${config.networking.hostName}";
-                  };
-                  services.fail2ban.enable = true;
-
-                  networking.firewall.allowedTCPPorts = [ 22 80 443 ];
-                })
-              ];
-            });
       });
 }

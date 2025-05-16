@@ -33,14 +33,15 @@ localFlake:
         # Note: The private key can also be included inline via the privateKey option,
         # but this makes the private key world-readable; thus, using privateKeyFile is
         # recommended.
-        privateKeyFile = "path to private key file";
+        privateKeyFile = "/private/wireguard_key";
+        generatePrivateKeyFile = true;
 
         peers = [
           # List of allowed peers.
           { # Feel free to give a meaning full name
             # Public key of the peer (not a file path).
             name = "teenihas";
-            publicKey = "3DC4C12726D702867BA95B33AEF896F6EF12E50Bs";
+            publicKey = "pYkL/P1D8lwAAxlz7G7kDg2ktjNv+EiRTgsqTqAebh0=";
             # List of IPs assigned to this peer within the tunnel subnet. Used to configure routing.
             allowedIPs = [ "10.100.0.2/32" ];
           }
