@@ -120,8 +120,8 @@ with lib;
           services.nginx = {
             enable = true;
             virtualHosts."${cfg.nginx.hostName}" = {
-              # forceSSL = true;
-              # enableACME = true;
+              forceSSL = true;
+              enableACME = true;
               locations."/".proxyPass =
                 "http://127.0.0.1:${builtins.toString cfg.port}/";
             };

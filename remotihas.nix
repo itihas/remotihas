@@ -7,33 +7,22 @@ localFlake:
       disk = {
         main = {
           type = "disk";
-          device = "/dev/disk/by-diskseq/1";
+          device = "/dev/sda";
           content = {
-            type = "gpt";
-            partitions = {
-              ESP = {
-                priority = 1;
-                name = "ESP";
-                start = "1M";
-                end = "128M";
-                type = "EF00";
-                content = {
-                  type = "filesystem";
-                  format = "vfat";
-                  mountpoint = "/boot";
-                  mountOptions = [ "umask=0077" ];
-                };
+            type = "table";
+            format = "msdos";
+            partitions = [{
+              part-type = "primary";
+              fs-type = "btrfs";
+              name = "root";
+              bootable = true;
+              content = {
+                type = "btrfs";
+                extraArgs = [ "-f" ]; # Override existing partition
+                mountpoint = "/";
+                mountOptions = [ "compress=zstd" "noatime" ];
               };
-              root = {
-                size = "100%";
-                content = {
-                  type = "btrfs";
-                  extraArgs = [ "-f" ]; # Override existing partition
-                  mountpoint = "/";
-                  mountOptions = [ "compress=zstd" "noatime" ];
-                };
-              };
-            };
+            }];
           };
         };
       };
@@ -61,8 +50,6 @@ localFlake:
             networking.useDHCP = lib.mkDefault true;
             nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
             boot.loader.grub.enable = true;
-            boot.loader.grub.efiSupport = true;
-            boot.loader.grub.efiInstallAsRemovable = true;
             boot.loader.grub.device = "/dev/sda";
             networking.hostName = "remotihas";
             networking.fqdn = "itihas.xyz";
@@ -82,6 +69,43 @@ localFlake:
             };
             services.fail2ban.enable = true;
 
+            security.acme = {
+              acceptTerms = true;
+              defaults.email = "sahiti93@gmail.com";
+            };
+
+            services.nginx = {
+
+
+              # Use recommended settings
+              recommendedGzipSettings = true;
+              recommendedOptimisation = true;
+              recommendedProxySettings = true;
+              recommendedTlsSettings = true;
+              sslCiphers = "AES256+EECDH:AES256+EDH:!aNULL";
+
+              commonHttpConfig = let
+                realIpsFromList = lib.strings.concatMapStringsSep "\n"
+                  (x: "set_real_ip_from  ${x};");
+                fileToList = x:
+                  lib.strings.splitString "\n" (builtins.readFile x);
+                cfipv4 = fileToList (pkgs.fetchurl {
+                  url = "https://www.cloudflare.com/ips-v4";
+                  sha256 =
+                    "0ywy9sg7spafi3gm9q5wb59lbiq0swvf0q3iazl0maq1pj1nsb7h";
+                });
+                cfipv6 = fileToList (pkgs.fetchurl {
+                  url = "https://www.cloudflare.com/ips-v6";
+                  sha256 =
+                    "1ad09hijignj6zlqvdjxv7rjj8567z357zfavv201b9vx3ikk7cy";
+                });
+              in ''
+                ${realIpsFromList cfipv4}
+                ${realIpsFromList cfipv6}
+                real_ip_header CF-Connecting-IP;
+              '';
+
+            };
             services.openssh.enable = true;
             networking.firewall.allowedTCPPorts = [ 22 80 443 ];
           })
