@@ -6,7 +6,9 @@
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    
+    disko.url = "github:nix-community/disko/latest";
+    disko.inputs.nixpkgs.follows = "nixpkgs";    
+    nixos-facter-modules.url = "github:numtide/nixos-facter-modules";
   };
 
   outputs = inputs:
