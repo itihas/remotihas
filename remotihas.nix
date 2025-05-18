@@ -66,6 +66,17 @@ localFlake:
               enable = true;
               enableNginx = true;
               virtualHost = "paste.${config.networking.fqdn}";
+              settings = {
+                main = {
+                  name = "pastihas";
+                  discussion = false;
+                  defaultformatter = "plalib.types.intext";
+                  qrcode = true;
+                  template = "bootstrap-dark-page";
+                };
+                model.class = "Filesystem";
+                model_options.dir = "/var/lib/privatebin/data";
+              };
             };
             services.fail2ban.enable = true;
 
@@ -75,7 +86,6 @@ localFlake:
             };
 
             services.nginx = {
-
 
               # Use recommended settings
               recommendedGzipSettings = true;
@@ -104,6 +114,11 @@ localFlake:
                 ${realIpsFromList cfipv6}
                 real_ip_header CF-Connecting-IP;
               '';
+
+              virtualHosts.${config.services.privatebin.virtualHost} = {
+                forceSSL = true;
+                enableACME = true;
+              };
 
             };
             services.openssh.enable = true;
