@@ -9,6 +9,10 @@
     disko.url = "github:nix-community/disko/latest";
     disko.inputs.nixpkgs.follows = "nixpkgs";    
     nixos-facter-modules.url = "github:numtide/nixos-facter-modules";
+    
+    sops-nix.url = "github:Mic92/sops-nix";
+    sops-nix.inputs.nixpkgs.follows = "nixpkgs";
+
   };
 
   outputs = inputs:

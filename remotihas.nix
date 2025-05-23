@@ -44,6 +44,7 @@ localFlake:
           myFormats
           itihas
           disko
+          inputs.sops-nix.nixosModules.sops
           inputs.nixos-facter-modules.nixosModules.facter
           ({ config, lib, pkgs, ... }: {
 

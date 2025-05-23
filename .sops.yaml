@@ -1,0 +1,13 @@
+keys:
+  - &admin_itihas age1rc9dc3gu8a9pmcwqqg7gtz48nhhtszyemueushrqpn4tkg0kw42qzkrj59
+  - &server_remotihas age1zxu9qc6pl5u9hsqk984kwwclphxmgk2rwdjl4ga9gwc9qgwxq9zqpmu2tl
+creation_rules:
+  - path_regex: secrets/[^/]+\.(yaml|json|env|ini)$
+    key_groups:
+    - age:
+      - *admin_itihas
+  - path_regex: secrets/remotihas/[^/]+\.(yaml|json|env|ini)$
+    key_groups:
+    - age:
+      - *admin_itihas
+      - *server_remotihas
