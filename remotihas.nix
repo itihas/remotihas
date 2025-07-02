@@ -44,6 +44,7 @@ localFlake:
           myFormats
           itihas
           disko
+          leantime
           inputs.sops-nix.nixosModules.sops
           inputs.nixos-facter-modules.nixosModules.facter
           ({ config, lib, pkgs, ... }: {
@@ -80,6 +81,13 @@ localFlake:
               };
             };
             services.fail2ban.enable = true;
+            services.leantime = {
+              enable = true;
+              nginx = {
+                enable = true;
+                hostName = "leantime.${config.networking.fqdn}";
+              };
+            };
 
             security.acme = {
               acceptTerms = true;

@@ -22,6 +22,8 @@
         inherit (inputs.flake-parts.lib) importApply;
         myFlakeModules = {
           gitit = importApply ./gitit.nix { inherit withSystem; };
+          docker = importApply ./docker.nix { inherit withSystem; };
+          leantime = importApply ./leantime.nix { inherit withSystem; };
           archivebox = importApply ./archivebox.nix { inherit withSystem; };
           caldav = importApply ./caldav.nix { inherit withSystem; };
           wireguard = importApply ./wireguard.nix { inherit withSystem; };
@@ -33,6 +35,8 @@
       in {
         imports = with myFlakeModules; [
           inputs.flake-parts.flakeModules.flakeModules
+          docker
+          leantime
           gitit
           wireguard
           itihas
