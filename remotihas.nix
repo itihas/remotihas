@@ -81,12 +81,14 @@ localFlake:
               };
             };
             services.fail2ban.enable = true;
+            sops.secrets.remotihas-leantime-env = {
+              format = "dotenv";
+              sopsFile = ./secrets/remotihas/leantime.env;
+              key = "";
+            };
             services.leantime = {
-              enable = true;
-              nginx = {
-                enable = true;
-                hostName = "leantime.${config.networking.fqdn}";
-              };
+              hostName = "leantime.${config.networking.fqdn}";
+              extraEnvFiles = [config.sops.secrets.remotihas-leantime-env.path ];
             };
 
             security.acme = {
