@@ -14,7 +14,7 @@
     arion.inputs.nixpkgs.follows = "nixpkgs";
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
-
+    
   };
 
   outputs = inputs:
@@ -26,6 +26,7 @@
           gitit = importApply ./gitit.nix { inherit withSystem; };
           docker = importApply ./docker.nix { inherit withSystem; };
           leantime = importApply ./leantime.nix { inherit withSystem; };
+          focalboard = importApply ./focalboard.nix { inherit withSystem; };
           archivebox = importApply ./archivebox.nix { inherit withSystem; };
           caldav = importApply ./caldav.nix { inherit withSystem; };
           wireguard = importApply ./wireguard.nix { inherit withSystem; };
@@ -39,6 +40,7 @@
           inputs.flake-parts.flakeModules.flakeModules
           docker
           leantime
+          focalboard
           gitit
           wireguard
           itihas
