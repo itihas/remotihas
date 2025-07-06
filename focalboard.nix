@@ -13,35 +13,14 @@ localFlake:
           rev = "v${version}";
           hash = "sha256-b7iEcVhkV+Nt+S+KcmhVocr6RC0PMlRnPcpintzM69k=";
         };
-        focalboard-npm-deps = pkgs.importNpmLock {
-          npmRoot = "${self'.packages.focalboard-src}/webapp";
-          inherit version;
-          packageSourceOverrides = {
-            "node_modules/eslint-plugin-mattermost" = pkgs.fetchFromGitHub {
-              owner = "mattermost";
-              repo = "eslint-plugin-mattermost";
-              rev = "5b0c972eacf19286e4c66221b39113bf8728a99e";
-              hash = "sha256-JMWqcHaoequGXp8Z+k5KmXEMyteEROgKo94MX3MSOLE=";
-            };
-          };
-        };
         focalboard-npm-package = pkgs.buildNpmPackage (final: {
           pname = "focalboard";
           inherit version;
           src = "${self'.packages.focalboard-src}/webapp";
-          npmDeps = self'.packages.focalboard-npm-deps;
-          npmConfigHook = pkgs.importNpmLock.npmConfigHook;
-          configurePhase = ''
-            mkdir node_modules
-            ln -s ${pkgs.cypress} ./node_modules/cypress || ls -lah node_modules/cypress
-          '';
-          makeCacheWriteable = true;
-          buildPhase = ''
-          npm pack
-          ls -R
-          '';
-          # dontNpmBuild = true;
-          npmFlags = [ "--loglevel=verbose" ];
+          npmDepsHash = "sha256-uJvXyoYthE9eShfBYjJt9FMVtEYE9NBdAxu6pLvuI0s=";
+          makeCacheWritable = true;
+          npmFlags = [ "--ignore-scripts" ];
+          npmBuildScript = "pack";
         });
 
         focalboard-server = pkgs.stdenv.mkDerivation {
@@ -50,14 +29,14 @@ localFlake:
           src = self'.packages.focalboard-src;
           buildInputs = with pkgs; [
             go
-            self'.focalboard-npm-package
+            git
+            self'.packages.focalboard-npm-package
             gtk3.dev
             webkitgtk_4_0.dev
           ];
-          # buildPhase = ''
-          #   make prebuild
-          #   make
-          # '';
+          BUILD_TAGS = "json1 sqlite3";
+          
+          buildPhase = "make server-linux";
         };
       };
     };
