@@ -7,7 +7,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     disko.url = "github:nix-community/disko/latest";
-    disko.inputs.nixpkgs.follows = "nixpkgs";    
+    disko.inputs.nixpkgs.follows = "nixpkgs";
     nixos-facter-modules.url = "github:numtide/nixos-facter-modules";
 
     arion.url = "github:hercules-ci/arion";
@@ -16,7 +16,7 @@
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
 
     colmena.url = "github:zhaofengli/colmena";
-    
+
   };
 
   outputs = inputs:
@@ -51,24 +51,22 @@
         ];
         systems = [ "x86_64-linux" ];
 
-        perSystem = {config, pkgs, ...}: {
-
-          devShell = pkgs.mkShell {
-            packages = [ pkgs.colmena ];
-          };
-          colmenaHive = inputs.colmena.lib.makeHive {
-            meta = {
-              nixpkgs = pkgs;
-            };
-            remotihas = {
-              deployment.targetHost = "root@157.80.64.64";
-              imports = [myFlakeModules.remotihas.nixosConfigurations.remotihas];
-            };
-
+        perSystem = { config, pkgs, ... }: {
+          devShells.default = pkgs.mkShell { packages = [ pkgs.colmena ]; };
         };
         flake = {
           flakeModules = myFlakeModules;
+          colmenaHive = inputs.colmena.lib.makeHive {
+            meta = {
+              nixpkgs = import inputs.nixpkgs { system = "x86_64-linux"; };
+            };
+            remotihas = {
+              deployment.targetHost = "root@157.80.64.64";
+              imports = [ self.nixosConfigurations.remotihas ];
+            };
+
           };
+
         };
 
       });

@@ -23,20 +23,83 @@ localFlake:
           npmBuildScript = "pack";
         });
 
-        focalboard-server = pkgs.stdenv.mkDerivation {
+        focalboard-server = pkgs.buildGoModule {
           name = "focalboard-server";
           inherit version;
-          src = self'.packages.focalboard-src;
-          buildInputs = with pkgs; [
-            go
-            git
-            self'.packages.focalboard-npm-package
-            gtk3.dev
-            webkitgtk_4_0.dev
+          src = "${self'.packages.focalboard-src}";
+          vendorHash = "sha256-uw4/n42SE0s/DFOP/8tkSnrw+H4pUJrZqQwx88/ennI=";
+          buildInputs = [ pkgs.sqlite ];
+          modRoot = "./server";
+          ldflags = [
+            "-X github.com/mattermost/focalboard/server/model.BuildNumber=dev"
+            "-X github.com/mattermost/focalboard/server/model.BuildDate=1970-01-01"
+            "-X github.com/mattermost/focalboard/server/model.BuildHash=nix-build"
+            "-X github.com/mattermost/focalboard/server/model.Edition=linux"
           ];
-          BUILD_TAGS = "json1 sqlite3";
-          
-          buildPhase = "make server-linux";
+
+          tags = [ "json1" "sqlite3" ];
+          buildPhase = ''
+            runHook preBuild
+
+            # Build server
+            go build -tags "json1 sqlite3" -o focalboard-server ./main
+
+            # Build app  
+            cd ../linux
+            go build -tags "json1 sqlite3" -o focalboard-app
+
+            runHook postBuild
+          '';
+          doCheck = false;
+
+          installPhase = ''
+            runHook preInstall
+
+            mkdir -p $out/bin
+            cp server/focalboard-server $out/bin/
+            cp linux/focalboard-app $out/bin/
+
+            runHook postInstall
+          '';
+        };
+
+        focalboard-app = pkgs.buildGoModule {
+          name = "focalboard-app";
+          inherit version;
+          src = "${self'.packages.focalboard-src}";
+          vendorHash = "sha256-0Nn101c9DSGuqCdAD38L5POSqNruH+Igs9WCZWjfrDU=";
+          buildInputs = [ pkgs.sqlite ];
+          modRoot = "./linux";
+          tags = [ "json1" "sqlite3" ];
+
+          doCheck = false;
+        };
+
+        focalboard = pkgs.stdenv.mkDerivation {
+          pname = "focalboard";
+          inherit version;
+          src = self'.packages.focalboard-src;
+
+          buildInputs = [
+            self'.packages.focalboard-server
+            self'.packages.focalboard-npm-package
+          ];
+
+          installPhase = ''
+            mkdir -p $out/bin
+            mkdir -p $out/share/focalboard
+
+            # Copy the server binary
+            cp ${self'.packages.focalboard-server}/bin/focalboard-server $out/bin/
+
+            # Copy the webapp
+            cp -R ${self'.packages.focalboard-npm-package}/pack $out/share/focalboard/
+
+            # Copy config and licenses
+            cp app-config.json $out/share/focalboard/config.json
+            cp NOTICE.txt $out/share/focalboard/
+            cp webapp/NOTICE.txt $out/share/focalboard/webapp-NOTICE.txt
+          '';
         };
       };
     };
