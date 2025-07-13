@@ -14,6 +14,8 @@
     arion.inputs.nixpkgs.follows = "nixpkgs";
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
+
+    colmena.url = "github:zhaofengli/colmena";
     
   };
 
@@ -49,8 +51,25 @@
         ];
         systems = [ "x86_64-linux" ];
 
+        perSystem = {config, pkgs, ...}: {
 
-        flake = { flakeModules = myFlakeModules; };
+          devShell = pkgs.mkShell {
+            packages = [ pkgs.colmena ];
+          };
+          colmenaHive = inputs.colmena.lib.makeHive {
+            meta = {
+              nixpkgs = pkgs;
+            };
+            remotihas = {
+              deployment.targetHost = "root@157.80.64.64";
+              imports = [myFlakeModules.remotihas.nixosConfigurations.remotihas];
+            };
+
+        };
+        flake = {
+          flakeModules = myFlakeModules;
+          };
+        };
 
       });
 }
