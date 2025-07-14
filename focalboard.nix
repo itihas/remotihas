@@ -38,11 +38,11 @@ localFlake:
           ];
 
           tags = [ "json1" "sqlite3" ];
+
           buildPhase = ''
             runHook preBuild
 
             # Build server
-            cd server
             go build -tags "json1 sqlite3" -o focalboard-server ./main
 
             runHook postBuild
@@ -52,14 +52,13 @@ localFlake:
           installPhase = ''
             runHook preInstall
 
-            mkdir -p $out/bin
-            ls -R
+            mkdir -p $out/{bin,share}
             chmod +x focalboard-server
             cp focalboard-server $out/bin/
 
-            cp app-config.json $out/share/focalboard/config.json
-            cp NOTICE.txt $out/share/focalboard/
-            cp webapp/NOTICE.txt $out/share/focalboard/webapp-NOTICE.txt
+            cp $src/app-config.json $out/share/config.json
+            cp $src/NOTICE.txt $out/share/
+            cp $src/webapp/NOTICE.txt $out/share/webapp-NOTICE.txt
 
             runHook postInstall
           '';
@@ -70,12 +69,22 @@ localFlake:
           inherit version;
           src = "${self'.packages.focalboard-src}";
           vendorHash = "sha256-0Nn101c9DSGuqCdAD38L5POSqNruH+Igs9WCZWjfrDU=";
-          buildInputs = [ pkgs.sqlite ];
-          nativeBuildInputs = [ pkgs.pkg-config pkgs.webkitgtk_4_0 pkgs.gtk3 ];
+          buildInputs = with pkgs; [ sqlite webkitgtk_4_0 webkitgtk_4_0 gtk3 ];
+          nativeBuildInputs = [ pkgs.pkg-config ];
           modRoot = "./linux";
           tags = [ "json1" "sqlite3" ];
-
+          # PKG_CONFIG_PATH =
+          #   "${pkgs.gtk3}/lib/pkgconfig:${pkgs.webkitgtk_4_0}/lib/pkgconfig";
           doCheck = false;
+          preBuild = ''
+            echo "Available pkg-config packages:"
+            pkg-config --list-all | grep -E "(gtk|webkit)" || true
+            echo "GTK3 cflags:" 
+            pkg-config --cflags gtk+-3.0 || true
+            echo "WebKit cflags:"
+            pkg-config --cflags webkit2gtk-4.0 || true
+            pkg-config --cflags webkit2gtk-4.1 || true
+          '';
         };
       };
     };
