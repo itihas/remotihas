@@ -28,7 +28,7 @@ localFlake:
           inherit version;
           src = "${self'.packages.focalboard-src}";
           vendorHash = "sha256-uw4/n42SE0s/DFOP/8tkSnrw+H4pUJrZqQwx88/ennI=";
-          buildInputs = [ pkgs.sqlite ];
+          buildInputs = [ pkgs.sqlite self'.packages.focalboard-npm-package ];
           modRoot = "./server";
           ldflags = [
             "-X github.com/mattermost/focalboard/server/model.BuildNumber=dev"
@@ -42,11 +42,8 @@ localFlake:
             runHook preBuild
 
             # Build server
+            cd server
             go build -tags "json1 sqlite3" -o focalboard-server ./main
-
-            # Build app  
-            cd ../linux
-            go build -tags "json1 sqlite3" -o focalboard-app
 
             runHook postBuild
           '';
@@ -56,8 +53,13 @@ localFlake:
             runHook preInstall
 
             mkdir -p $out/bin
-            cp server/focalboard-server $out/bin/
-            cp linux/focalboard-app $out/bin/
+            ls -R
+            chmod +x focalboard-server
+            cp focalboard-server $out/bin/
+
+            cp app-config.json $out/share/focalboard/config.json
+            cp NOTICE.txt $out/share/focalboard/
+            cp webapp/NOTICE.txt $out/share/focalboard/webapp-NOTICE.txt
 
             runHook postInstall
           '';
@@ -69,37 +71,11 @@ localFlake:
           src = "${self'.packages.focalboard-src}";
           vendorHash = "sha256-0Nn101c9DSGuqCdAD38L5POSqNruH+Igs9WCZWjfrDU=";
           buildInputs = [ pkgs.sqlite ];
+          nativeBuildInputs = [ pkgs.pkg-config pkgs.webkitgtk_4_0 pkgs.gtk3 ];
           modRoot = "./linux";
           tags = [ "json1" "sqlite3" ];
 
           doCheck = false;
-        };
-
-        focalboard = pkgs.stdenv.mkDerivation {
-          pname = "focalboard";
-          inherit version;
-          src = self'.packages.focalboard-src;
-
-          buildInputs = [
-            self'.packages.focalboard-server
-            self'.packages.focalboard-npm-package
-          ];
-
-          installPhase = ''
-            mkdir -p $out/bin
-            mkdir -p $out/share/focalboard
-
-            # Copy the server binary
-            cp ${self'.packages.focalboard-server}/bin/focalboard-server $out/bin/
-
-            # Copy the webapp
-            cp -R ${self'.packages.focalboard-npm-package}/pack $out/share/focalboard/
-
-            # Copy config and licenses
-            cp app-config.json $out/share/focalboard/config.json
-            cp NOTICE.txt $out/share/focalboard/
-            cp webapp/NOTICE.txt $out/share/focalboard/webapp-NOTICE.txt
-          '';
         };
       };
     };

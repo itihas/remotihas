@@ -51,23 +51,7 @@
         ];
         systems = [ "x86_64-linux" ];
 
-        perSystem = { config, pkgs, ... }: {
-          devShells.default = pkgs.mkShell { packages = [ pkgs.colmena ]; };
-        };
-        flake = {
-          flakeModules = myFlakeModules;
-          colmenaHive = inputs.colmena.lib.makeHive {
-            meta = {
-              nixpkgs = import inputs.nixpkgs { system = "x86_64-linux"; };
-            };
-            remotihas = {
-              deployment.targetHost = "root@157.80.64.64";
-              imports = [ self.nixosConfigurations.remotihas ];
-            };
-
-          };
-
-        };
+        flake.flakeModules = myFlakeModules;
 
       });
 }
