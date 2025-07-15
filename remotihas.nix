@@ -44,9 +44,9 @@ localFlake:
           myFormats
           itihas
           disko
-          leantime
           inputs.sops-nix.nixosModules.sops
           inputs.nixos-facter-modules.nixosModules.facter
+          inputs.plane.nixosModules.plane
           ({ config, lib, pkgs, ... }: {
 
             networking.useDHCP = lib.mkDefault true;
@@ -81,15 +81,6 @@ localFlake:
               };
             };
             services.fail2ban.enable = true;
-            sops.secrets.remotihas-leantime-env = {
-              format = "dotenv";
-              sopsFile = ./secrets/remotihas/leantime.env;
-              key = "";
-            };
-            services.leantime = {
-              hostName = "leantime.${config.networking.fqdn}";
-              extraEnvFiles = [config.sops.secrets.remotihas-leantime-env.path ];
-            };
 
             security.acme = {
               acceptTerms = true;
