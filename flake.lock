@@ -452,11 +452,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1752561310,
-        "narHash": "sha256-DKMelFL4t8y1s5aEUYY65Ga07oI6JQC0e7CaklvMmyU=",
+        "lastModified": 1752592096,
+        "narHash": "sha256-5JOpb7WO7q3w5dfcEx0ANHE4NNYVSoKDSgDgyaYbgc8=",
         "owner": "itihas",
         "repo": "plane",
-        "rev": "695028e3d2a64b11ebd92fc3bf5fd2ec0ffec3d0",
+        "rev": "7f32fe1cff11f5fbe1129f52056c2c8be74ef56d",
         "type": "github"
       },
       "original": {

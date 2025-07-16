@@ -14,6 +14,7 @@ localFlake:
         htop
         git
         wget
+        tmux
       ];
     };
     security.pam.sshAgentAuth.enable = true;
