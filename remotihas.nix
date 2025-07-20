@@ -46,8 +46,6 @@ localFlake:
           disko
           inputs.sops-nix.nixosModules.sops
           inputs.nixos-facter-modules.nixosModules.facter
-          inputs.plane.nixosModules.plane
-          inputs.plane.nixosModules.plane-build
           ({ config, lib, pkgs, ... }: {
 
             networking.useDHCP = lib.mkDefault true;
@@ -66,6 +64,12 @@ localFlake:
               };
             };
 
+            services.redmine.enable = true;
+            services.nginx.virtualHosts."project.${config.networking.fqdn}" = {
+              forceSSL = true;
+              enableACME = true;
+              locations."/".proxyPass = "http://127.0.0.1:${toString config.services.redmine.port}";
+            };
             services.hedgedoc = {
               enable = true;
               settings = {
