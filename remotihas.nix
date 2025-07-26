@@ -44,6 +44,7 @@ localFlake:
           zitadel
           myFormats
           itihas
+          hedgedoc
           disko
           postfix
           inputs.sops-nix.nixosModules.sops
@@ -74,37 +75,7 @@ localFlake:
             #   locations."/".proxyPass =
             #     "http://127.0.0.1:${toString config.services.redmine.port}";
             # };
-            services.hedgedoc = {
-              enable = true;
-              settings = {
-                protocolUseSsl = true;
-                allowGravatar = true;
-                host = "0.0.0.0";
-                domain = "md.${config.networking.fqdn}";
-                urlAddPort = false;
-                allowOrigin = [
-                  "localhost"
-                  "127.0.0.1"
-                  config.services.hedgedoc.settings.domain
-                ];
-              };
-            };
-            services.nginx.virtualHosts.${config.services.hedgedoc.settings.domain} =
-              {
-                forceSSL = true;
-                enableACME = true;
-                locations."/".proxyPass =
-                  "http://${toString config.services.hedgedoc.settings.host}:${
-                    toString config.services.hedgedoc.settings.port
-                  }";
-                locations."/socket.io/" = {
-                  proxyPass = "http://${
-                      toString config.services.hedgedoc.settings.host
-                    }:${toString config.services.hedgedoc.settings.port}";
-                  proxyWebsockets = true;
-                  extraConfig = "proxy_ssl_server_name on;";
-                };
-              };
+
 
             services.privatebin = {
               enable = true;

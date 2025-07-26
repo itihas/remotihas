@@ -26,6 +26,7 @@
           "plane"
           "zitadel"
           "archivebox"
+          "hedgedoc"
           "caldav"
           "wireguard"
           "calibre-web"
