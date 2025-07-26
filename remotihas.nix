@@ -45,6 +45,7 @@ localFlake:
           myFormats
           itihas
           disko
+          postfix
           inputs.sops-nix.nixosModules.sops
           inputs.nixos-facter-modules.nixosModules.facter
           ({ config, lib, pkgs, ... }: {
@@ -64,6 +65,7 @@ localFlake:
                 hostName = "gitit.${config.networking.fqdn}";
               };
             };
+
 
             # services.redmine.enable = true;
             # services.nginx.virtualHosts."project.${config.networking.fqdn}" = {
