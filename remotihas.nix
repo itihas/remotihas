@@ -41,6 +41,7 @@ localFlake:
           })
           gitit
           wireguard
+          zitadel
           myFormats
           itihas
           disko
@@ -64,12 +65,13 @@ localFlake:
               };
             };
 
-            services.redmine.enable = true;
-            services.nginx.virtualHosts."project.${config.networking.fqdn}" = {
-              forceSSL = true;
-              enableACME = true;
-              locations."/".proxyPass = "http://127.0.0.1:${toString config.services.redmine.port}";
-            };
+            # services.redmine.enable = true;
+            # services.nginx.virtualHosts."project.${config.networking.fqdn}" = {
+            #   forceSSL = true;
+            #   enableACME = true;
+            #   locations."/".proxyPass =
+            #     "http://127.0.0.1:${toString config.services.redmine.port}";
+            # };
             services.hedgedoc = {
               enable = true;
               settings = {
@@ -78,21 +80,25 @@ localFlake:
                 host = "0.0.0.0";
                 domain = "md.${config.networking.fqdn}";
                 urlAddPort = false;
-                allowOrigin =
-                  [ "localhost" "127.0.0.1" config.services.hedgedoc.settings.domain ];
+                allowOrigin = [
+                  "localhost"
+                  "127.0.0.1"
+                  config.services.hedgedoc.settings.domain
+                ];
               };
             };
             services.nginx.virtualHosts.${config.services.hedgedoc.settings.domain} =
               {
                 forceSSL = true;
                 enableACME = true;
-                locations."/".proxyPass = "http://${toString config.services.hedgedoc.settings.host}:${
+                locations."/".proxyPass =
+                  "http://${toString config.services.hedgedoc.settings.host}:${
                     toString config.services.hedgedoc.settings.port
                   }";
                 locations."/socket.io/" = {
-                  proxyPass = "http://${toString config.services.hedgedoc.settings.host}:${
-                      toString config.services.hedgedoc.settings.port
-                    }";
+                  proxyPass = "http://${
+                      toString config.services.hedgedoc.settings.host
+                    }:${toString config.services.hedgedoc.settings.port}";
                   proxyWebsockets = true;
                   extraConfig = "proxy_ssl_server_name on;";
                 };
@@ -120,6 +126,11 @@ localFlake:
               acceptTerms = true;
               defaults.email = "sahiti93@gmail.com";
             };
+
+            sops.defaultSopsFile = ./secrets/remotihas/secrets.yaml;
+            sops.age.keyFile = "/var/lib/sops-nix/key.txt";
+            # This will generate a new key if the key specified above does not exist
+            sops.age.generateKey = true;
 
             services.nginx = {
 

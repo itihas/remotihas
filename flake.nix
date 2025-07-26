@@ -19,32 +19,26 @@
     inputs.flake-parts.lib.mkFlake { inherit inputs; }
     ({ self, withSystem, ... }:
       let
-        inherit (inputs.flake-parts.lib) importApply;
-        myFlakeModules = {
-          gitit = importApply ./gitit.nix { inherit withSystem; };
-          docker = importApply ./docker.nix { inherit withSystem; };
-          focalboard = importApply ./focalboard.nix { inherit withSystem; };
-          plane = importApply ./plane.nix {inherit withSystem;};
-          archivebox = importApply ./archivebox.nix { inherit withSystem; };
-          caldav = importApply ./caldav.nix { inherit withSystem; };
-          wireguard = importApply ./wireguard.nix { inherit withSystem; };
-          calibre-web = importApply ./calibre-web.nix { inherit withSystem; };
-          itihas = importApply ./itihas.nix { inherit withSystem; };
-          remotihas = importApply ./remotihas.nix { inherit withSystem; };
-          generators = importApply ./generators.nix { inherit withSystem; };
-        };
+        myFlakeModules = inputs.nixpkgs.lib.genAttrs [
+          "gitit"
+          "docker"
+          "focalboard"
+          "plane"
+          "zitadel"
+          "archivebox"
+          "caldav"
+          "wireguard"
+          "calibre-web"
+          "itihas"
+          "remotihas"
+          "generators"
+        ] (p:
+          inputs.flake-parts.lib.importApply ./${p}.nix {
+            inherit withSystem;
+          });
       in {
-        imports = with myFlakeModules; [
-          inputs.flake-parts.flakeModules.flakeModules
-          docker
-          focalboard
-          plane
-          gitit
-          wireguard
-          itihas
-          remotihas
-          generators
-        ];
+        imports = (builtins.attrValues myFlakeModules)
+          ++ [ inputs.flake-parts.flakeModules.flakeModules ];
         systems = [ "x86_64-linux" ];
 
         flake.flakeModules = myFlakeModules;
