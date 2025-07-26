@@ -59,14 +59,19 @@ localFlake:
             networking.fqdn = "itihas.xyz";
             networking.networkmanager.enable = true;
 
+            sops.defaultSopsFile = ./secrets/remotihas/secrets.yaml;
+            sops.age.keyFile = "/var/lib/sops-nix/key.txt";
+            # This will generate a new key if the key specified above does not exist
+            sops.age.generateKey = true;
+
             services.gitit = {
               enable = true;
+              authenticationMethod = "http";
               nginx = {
                 enable = true;
                 hostName = "gitit.${config.networking.fqdn}";
               };
             };
-
 
             # services.redmine.enable = true;
             # services.nginx.virtualHosts."project.${config.networking.fqdn}" = {
@@ -75,7 +80,6 @@ localFlake:
             #   locations."/".proxyPass =
             #     "http://127.0.0.1:${toString config.services.redmine.port}";
             # };
-
 
             services.privatebin = {
               enable = true;
@@ -99,11 +103,6 @@ localFlake:
               acceptTerms = true;
               defaults.email = "sahiti93@gmail.com";
             };
-
-            sops.defaultSopsFile = ./secrets/remotihas/secrets.yaml;
-            sops.age.keyFile = "/var/lib/sops-nix/key.txt";
-            # This will generate a new key if the key specified above does not exist
-            sops.age.generateKey = true;
 
             services.nginx = {
 
