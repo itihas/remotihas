@@ -66,7 +66,7 @@ localFlake:
 
             services.gitit = {
               enable = true;
-              authenticationMethod = "http";
+              authenticationMethod = "form";
               nginx = {
                 enable = true;
                 hostName = "gitit.${config.networking.fqdn}";
@@ -78,8 +78,18 @@ localFlake:
             #   forceSSL = true;
             #   enableACME = true;
             #   locations."/".proxyPass =
-            #     "http://127.0.0.1:${toString config.services.redmine.port}";
+            #     "http://localhost:${toString config.services.redmine.port}";
             # };
+
+            services.grocy = {
+              enable = true;
+              hostName = "grocy.${networking.fqdn}";
+              nginx.enableSSL = true;
+              settings = {
+                currency = "INR";
+                culture = "en_GB";
+              };
+            };
 
             services.privatebin = {
               enable = true;
