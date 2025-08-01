@@ -145,7 +145,7 @@ with lib;
               enableACME = true;
               locations = {
                 "/".proxyPass = "http://127.0.0.1:${builtins.toString cfg.port}/";
-              } // lib.optionalAttrs (cfg.authenticationMethod == "http") {
+              } // lib.optionalAttrs (cfg.authenticationMethod == "generic") {
                 "/_auth" = {
                   proxyPass = "https://auth.${config.networking.fqdn}/oauth/v2/userinfo";
                   extraConfig = ''
