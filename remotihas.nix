@@ -66,7 +66,7 @@ localFlake:
 
             services.gitit = {
               enable = true;
-              authenticationMethod = "form";
+              authenticationMethod = "http";
               nginx = {
                 enable = true;
                 hostName = "gitit.${config.networking.fqdn}";
@@ -81,9 +81,35 @@ localFlake:
             #     "http://localhost:${toString config.services.redmine.port}";
             # };
 
+            sops.secrets."oauth2-proxy/clientSecret" = { };
+            sops.secrets."oauth2-proxy/cookieSecret" = { };
+            sops.templates."oauth2-proxy-keyfile".content = ''              OAUTH2_PROXY_CLIENT_SECRET=${config.sops.placeholder."oauth2-proxy/clientSecret"}
+OAUTH2_PROXY_COOKIE_SECRET=${config.sops.placeholder."oauth2-proxy/cookieSecret"}
+            '';
+            services.oauth2-proxy = {
+              enable = true;
+              provider = "oidc";
+              passAccessToken = true;
+              passBasicAuth = true;
+              loginURL =
+                "https://auth.${config.networking.fqdn}/oauth/v2/authorize";
+              redeemURL =
+                "https://auth.${config.networking.fqdn}/oauth/v2/token";
+              oidcIssuerUrl = "auth.${config.networking.fqdn}/";
+              cookie = { domain = config.networking.fqdn; };
+              nginx = {
+                domain = config.networking.fqdn;
+                virtualHosts = {
+                  "gitit.${config.networking.fqdn}" = { };
+                  "grocy.${config.networking.fqdn}" = { };
+                };
+              };
+              clientID = "331480552219672577";
+              keyFile = config.sops.templates."oauth2-proxy-keyfile".path;
+            };
             services.grocy = {
               enable = true;
-              hostName = "grocy.${networking.fqdn}";
+              hostName = "grocy.${config.networking.fqdn}";
               nginx.enableSSL = true;
               settings = {
                 currency = "INR";
