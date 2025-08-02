@@ -83,26 +83,36 @@ localFlake:
 
             sops.secrets."oauth2-proxy/clientSecret" = { };
             sops.secrets."oauth2-proxy/cookieSecret" = { };
-            sops.templates."oauth2-proxy-keyfile".content = ''              OAUTH2_PROXY_CLIENT_SECRET=${config.sops.placeholder."oauth2-proxy/clientSecret"}
-OAUTH2_PROXY_COOKIE_SECRET=${config.sops.placeholder."oauth2-proxy/cookieSecret"}
+            sops.templates."oauth2-proxy-keyfile".content = ''
+              OAUTH2_PROXY_CLIENT_SECRET=${
+                config.sops.placeholder."oauth2-proxy/clientSecret"
+              }
+              OAUTH2_PROXY_COOKIE_SECRET=${
+                config.sops.placeholder."oauth2-proxy/cookieSecret"
+              }
             '';
             services.oauth2-proxy = {
               enable = true;
               provider = "oidc";
               passAccessToken = true;
               passBasicAuth = true;
-              loginURL =
-                "https://auth.${config.networking.fqdn}/oauth/v2/authorize";
-              redeemURL =
-                "https://auth.${config.networking.fqdn}/oauth/v2/token";
-              oidcIssuerUrl = "auth.${config.networking.fqdn}/";
-              cookie = { domain = config.networking.fqdn; };
-              nginx = {
+              email.domains = [ "*" ];
+              redirectURL =
+                "http://proxy.${config.networking.fqdn}/oauth2/callback";
+              oidcIssuerUrl = "https://auth.${config.networking.fqdn}";
+              cookie = {
+                secure = true;
                 domain = config.networking.fqdn;
-                virtualHosts = {
-                  "gitit.${config.networking.fqdn}" = { };
-                  "grocy.${config.networking.fqdn}" = { };
-                };
+              };
+              reverseProxy = true;
+              setXauthrequest = true;
+              upstream = [ "static://200" ];
+              nginx = {
+                domain = "proxy.${config.networking.fqdn}";
+                # virtualHosts = {
+                #   "gitit.${config.networking.fqdn}" = { };
+                #   "grocy.${config.networking.fqdn}" = { };
+                # };
               };
               clientID = "331480552219672577";
               keyFile = config.sops.templates."oauth2-proxy-keyfile".path;
@@ -116,6 +126,14 @@ OAUTH2_PROXY_COOKIE_SECRET=${config.sops.placeholder."oauth2-proxy/cookieSecret"
                 culture = "en_GB";
               };
             };
+            # environment.etc."grocy/config.php".text = ''
+            #   Setting('AUTH_CLASS', 'Grocy\Middleware\ReverseProxyAuthMiddleware');
+            #   Setting('REVERSE_PROXY_AUTH_USE_ENV','true');
+            # '';
+            # services.nginx.virtualHosts."grocy.${config.networking.fqdn}".locations."~ \\.php$".extraConfig =
+            #   ''
+            #     fastcgi_param REMOTE_USER $user;
+            #   '';
 
             services.privatebin = {
               enable = true;
