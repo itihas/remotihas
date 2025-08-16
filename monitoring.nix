@@ -2,30 +2,17 @@ localFlake:
 
 { self, inputs, ... }: {
   flake.nixosModules.monitoring = { config, lib, pkgs, ... }:
-    with lib; {
+    with lib;
+    let
+      exporters = [ "nginx" "nginxlog" "node" "php-fpm" "systemd" "postgres" ];
+    in {
       services.prometheus = {
         enable = true;
-        exporters = {
-          nginx.enable = true;
-          nginxlog.enable = true;
-          node.enable = true;
-          php-fpm.emable = true;
-          systemd.enable = true;
-          postgres.enable = true;
-        };
-        scrapeConfigs = let
-          fn = e: {
-            job_name = e;
-            static_configs = singleton {
-              targets = singleton "localhost:${
-                  toString config.services.prometheus.exporters.${e}.port
-                }";
-            };
-          };
-          activeExporters =
-            map (e: mkIf config.services.prometheus.exporters.${e}.enable)
-            (attrNames config.services.exporters);
-        in map fn activeExporters;
+        exporters = genAttrs exporters (n: { enable = true; });
+        scrapeConfigs = mapAttrsToList (n: v: {
+          job_name = n;
+          static_configs = [{ targets = [ "localhost:${toString v.port}" ]; }];
+        }) (getAttrs exporters config.services.prometheus.exporters);
       };
       services.grafana = {
         enable = true;
@@ -35,12 +22,12 @@ localFlake:
           domain = "grafana.${config.networking.fqdn}";
         };
       };
-      services.nginx.virtualHosts."grafana.${
-        toString config.networking.fqdn
-      }".locations."/" = {
-        proxyPass =
-          "http://127.0.0.1:${config.services.grafnaa.settings.server.http_port}";
-        recommendedProxySettings = true;
-      };
+      services.nginx.virtualHosts."grafana.${config.networking.fqdn}".locations."/" =
+        {
+          proxyPass = "http://127.0.0.1:${
+              toString config.services.grafana.settings.server.http_port
+            }";
+          recommendedProxySettings = true;
+        };
     };
 }

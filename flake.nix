@@ -43,8 +43,9 @@
         imports = (builtins.attrValues myFlakeModules)
           ++ [ inputs.flake-parts.flakeModules.flakeModules ];
         systems = [ "x86_64-linux" ];
-
+        perSystem = { pkgs, ... }: {
+          devShells.default = pkgs.mkShell { packages = [ pkgs.sops ]; };
+        };
         flake.flakeModules = myFlakeModules;
-
       });
 }

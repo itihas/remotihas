@@ -40,13 +40,13 @@ localFlake:
             ];
           })
           gitit
-          wireguard
           zitadel
           myFormats
           itihas
           hedgedoc
           disko
           postfix
+          monitoring
           inputs.sops-nix.nixosModules.sops
           inputs.nixos-facter-modules.nixosModules.facter
           ({ config, lib, pkgs, ... }: {
@@ -57,7 +57,8 @@ localFlake:
             boot.loader.grub.device = "/dev/sda";
             networking.hostName = "remotihas";
             networking.fqdn = "itihas.xyz";
-            networking.networkmanager.enable = true;
+            networking.useNetworkd = true;
+            systemd.network.enable = true;
 
             sops.defaultSopsFile = ./secrets/remotihas/secrets.yaml;
             sops.age.keyFile = "/var/lib/sops-nix/key.txt";
@@ -117,6 +118,7 @@ localFlake:
               clientID = "331480552219672577";
               keyFile = config.sops.templates."oauth2-proxy-keyfile".path;
             };
+
             services.grocy = {
               enable = true;
               hostName = "grocy.${config.networking.fqdn}";
@@ -126,6 +128,7 @@ localFlake:
                 culture = "en_GB";
               };
             };
+
             # environment.etc."grocy/config.php".text = ''
             #   Setting('AUTH_CLASS', 'Grocy\Middleware\ReverseProxyAuthMiddleware');
             #   Setting('REVERSE_PROXY_AUTH_USE_ENV','true');
@@ -151,6 +154,56 @@ localFlake:
                 model_options.dir = "/var/lib/privatebin/data";
               };
             };
+
+            services.headscale = {
+              enable = true;
+              address = "0.0.0.0";
+              port = 8080;
+              settings = {
+                logtail.enabled = false;
+                server_url = "https://headscale.${config.networking.fqdn}";
+                dns = {
+                  magic_dns = true;
+                  nameservers.global = [
+                    "9.9.9.9"
+                  ];
+                  base_domain = "headscale.${config.networking.fqdn}";
+                };
+                ip_prefixes = [ "10.16.0.0/16" "fd86:db8::/32" ];
+                database.type = "postgres";
+                database.postgres = {
+                  host = "127.0.0.1:${
+                      toString config.services.postgresql.settings.port
+                    }";
+                  user = "headscale";
+                };
+              };
+            };
+
+            services.postgresql = let
+              name = config.services.headscale.settings.database.postgres.user;
+            in {
+              ensureUsers = [{
+                inherit name;
+                ensureDBOwnership = true;
+              }];
+              ensureDatabases = [ name ];
+            };
+
+            services.nginx.virtualHosts."headscale.${config.networking.fqdn}" =
+              {
+                forceSSL = true;
+                enableACME = true;
+                locations."/" = {
+                  proxyPass = "http://localhost:${
+                      toString config.services.headscale.port
+                    }";
+                  proxyWebsockets = true;
+                };
+              };
+
+            environment.systemPackages = [ config.services.headscale.package ];
+
             services.fail2ban.enable = true;
 
             security.acme = {
@@ -194,6 +247,7 @@ localFlake:
               };
 
             };
+
             services.openssh.enable = true;
             networking.firewall.allowedTCPPorts = [ 22 80 443 ];
           })
