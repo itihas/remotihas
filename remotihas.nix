@@ -67,7 +67,7 @@ localFlake:
 
             services.gitit = {
               enable = true;
-              authenticationMethod = "http";
+              authenticationMethod = "form";
               nginx = {
                 enable = true;
                 hostName = "gitit.${config.networking.fqdn}";
@@ -82,42 +82,38 @@ localFlake:
             #     "http://localhost:${toString config.services.redmine.port}";
             # };
 
-            sops.secrets."oauth2-proxy/clientSecret" = { };
-            sops.secrets."oauth2-proxy/cookieSecret" = { };
-            sops.templates."oauth2-proxy-keyfile".content = ''
-              OAUTH2_PROXY_CLIENT_SECRET=${
-                config.sops.placeholder."oauth2-proxy/clientSecret"
-              }
-              OAUTH2_PROXY_COOKIE_SECRET=${
-                config.sops.placeholder."oauth2-proxy/cookieSecret"
-              }
-            '';
-            services.oauth2-proxy = {
-              enable = true;
-              provider = "oidc";
-              passAccessToken = true;
-              passBasicAuth = true;
-              email.domains = [ "*" ];
-              redirectURL =
-                "http://proxy.${config.networking.fqdn}/oauth2/callback";
-              oidcIssuerUrl = "https://auth.${config.networking.fqdn}";
-              cookie = {
-                secure = true;
-                domain = config.networking.fqdn;
-              };
-              reverseProxy = true;
-              setXauthrequest = true;
-              upstream = [ "static://200" ];
-              nginx = {
-                domain = "proxy.${config.networking.fqdn}";
-                # virtualHosts = {
-                #   "gitit.${config.networking.fqdn}" = { };
-                #   "grocy.${config.networking.fqdn}" = { };
-                # };
-              };
-              clientID = "331480552219672577";
-              keyFile = config.sops.templates."oauth2-proxy-keyfile".path;
-            };
+            # sops.secrets."oauth2-proxy/clientSecret" = { };
+            # sops.secrets."oauth2-proxy/cookieSecret" = { };
+            # sops.templates."oauth2-proxy-keyfile".content = ''
+            #   OAUTH2_PROXY_CLIENT_SECRET=${
+            #     config.sops.placeholder."oauth2-proxy/clientSecret"
+            #   }
+            #   OAUTH2_PROXY_COOKIE_SECRET=${
+            #     config.sops.placeholder."oauth2-proxy/cookieSecret"
+            #   }
+            # '';
+            # services.oauth2-proxy = {
+            #   enable = true;
+            #   provider = "oidc";
+            #   passAccessToken = true;
+            #   passBasicAuth = true;
+            #   email.domains = [ "*" ];
+            #   redirectURL =
+            #     "http://proxy.${config.networking.fqdn}/oauth2/callback";
+            #   oidcIssuerUrl = "https://auth.${config.networking.fqdn}";
+            #   cookie = {
+            #     secure = true;
+            #     domain = config.networking.fqdn;
+            #   };
+            #   reverseProxy = true;
+            #   setXauthrequest = true;
+            #   upstream = [ "static://200" ];
+            #   nginx = {
+            #     domain = "proxy.${config.networking.fqdn}";
+            #   };
+            #   clientID = "331480552219672577";
+            #   keyFile = config.sops.templates."oauth2-proxy-keyfile".path;
+            # };
 
             services.grocy = {
               enable = true;
