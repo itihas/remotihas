@@ -32,7 +32,7 @@ localFlake:
             InstanceName: ${config.networking.hostName}
             Org.Human:
               UserName: admin
-              FirstPassword: ${config.sops.placeholder."zitadel/firstPass"}
+              Password: ${config.sops.placeholder."zitadel/firstPass"}
         '';
       };
       sops.templates."zitadelPostgresUser.yml" = zitadelSecretConf // {
@@ -75,6 +75,17 @@ localFlake:
           ExternalPort = 443;
           ExternalSecure = true;
           ExternalDomain = "auth.${config.networking.fqdn}";
+          SystemAPIUsers = [{
+            system-user = {
+              KeyData =
+                "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUE4TW1PazhsdDJFUkR5L3NGbjFidQpXc0d0djVDQ2xUQkZqQkpIYVVzdmlOb05Eb0c2L2lTcWVxcDRWdFo3QkI5MDQ3SjZQVWxDcXhoQXFzWWlHeWIxCmREV1Zad1JacDdlN09keHFoOFhBS1ZNUkZCbVo5ZldoZ0FKNWczRDNVckRxTXpzb1hUbzM0YkNYWXloUmk0UnUKU1RNUUdXV0hNRmVSZ0ROY1NYNkJGWDNCTnVvSG5ENCt3QTV1WXd3RWFYU01QTWJyYTZZaEh3WGZWYXl2ektCeAo1eG9wWjBnanJtVmVOUFJKcFkwc2VRcEtaUDRCaWsvcFptME5xQXp4eVNzUE5IMzYyTFMzRThzRG4vTHpaSFhrCmtteHlKWXdyS2NaNklpNnQxT2g2UUtyWEgwVXhwdnR4RFI2Z2F2eFB2RWlrMUZZTlFlRkM1ejlzbHU1SDE5Z2gKbVFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg==";
+              Memberships = [{
+                MemberType = "System";
+                Roles = [ "IAM_OWNER" "ORG_OWNER" "SYSTEM_OWNER" ];
+              }];
+            };
+          }];
+
         };
       };
       services.postgresql = {
