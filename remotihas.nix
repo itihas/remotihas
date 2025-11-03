@@ -158,34 +158,23 @@ localFlake:
               settings = {
                 logtail.enabled = false;
                 server_url = "https://headscale.${config.networking.fqdn}";
+                metrics_listen_addr = "127.0.0.1:8081";
                 dns = {
                   magic_dns = true;
                   nameservers.global = [
                     "9.9.9.9"
+                    "1.1.1.1"
+                    "8.8.8.8"
                   ];
-                  base_domain = "headscale.${config.networking.fqdn}";
-                };
-                ip_prefixes = [ "10.16.0.0/16" "fd86:db8::/32" ];
-                database.type = "postgres";
-                database.postgres = {
-                  host = "127.0.0.1:${
-                      toString config.services.postgresql.settings.port
-                    }";
-                  user = "headscale";
+                  base_domain = "itihas.internal";
                 };
               };
             };
-
-            services.postgresql = let
-              name = config.services.headscale.settings.database.postgres.user;
-            in {
-              ensureUsers = [{
-                inherit name;
-                ensureDBOwnership = true;
-              }];
-              ensureDatabases = [ name ];
-            };
-
+            services.prometheus.scrapeConfigs = [{
+              job_name = "headscale";
+              static_configs = [{ targets = [ config.services.headscale.settings.metrics_listen_addr ]; }];
+            }];
+            
             services.nginx.virtualHosts."headscale.${config.networking.fqdn}" =
               {
                 forceSSL = true;
