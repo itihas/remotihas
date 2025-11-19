@@ -75,6 +75,10 @@ localFlake:
           ExternalPort = 443;
           ExternalSecure = true;
           ExternalDomain = "auth.${config.networking.fqdn}";
+          Machine.Identification = {
+            Hostname.Enabled = true;
+            Webhook.Enabled = false;
+          };
           SystemAPIUsers = [{
             system-user = {
               KeyData =
