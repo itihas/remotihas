@@ -44,6 +44,7 @@ localFlake:
           myFormats
           itihas
           hedgedoc
+          outline
           disko
           postfix
           monitoring

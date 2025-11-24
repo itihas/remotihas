@@ -35,6 +35,7 @@
           "generators"
           "postfix"
           "monitoring"
+          "outline"
         ] (p:
           inputs.flake-parts.lib.importApply ./${p}.nix {
             inherit withSystem;
