@@ -43,6 +43,7 @@ localFlake:
           zitadel
           myFormats
           itihas
+          isso
           hedgedoc
           outline
           disko

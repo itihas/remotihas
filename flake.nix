@@ -36,6 +36,7 @@
           "postfix"
           "monitoring"
           "outline"
+          "isso"
         ] (p:
           inputs.flake-parts.lib.importApply ./${p}.nix {
             inherit withSystem;
