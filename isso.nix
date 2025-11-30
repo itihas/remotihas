@@ -10,7 +10,10 @@ localFlake:
           dbpath = "/var/lib/isso/comments.db";
         };
         server.listen = "http://localhost:1234";
-        moderation.enabled = true;
+        moderation = {
+          enabled = true;
+          approve-if-email-previously-approved = true;
+        };
       };
     };
 
