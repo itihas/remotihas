@@ -19,7 +19,6 @@ localFlake:
       enable = true;
       hostname = config.networking.fqdn;
       destination = [ config.networking.fqdn ];
-      relayHost = ""; # Direct delivery
       config = {
         smtp_tls_security_level = "may";
         smtp_tls_note_starttls_offer = "yes";

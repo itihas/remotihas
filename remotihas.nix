@@ -47,6 +47,7 @@ localFlake:
           hedgedoc
           outline
           disko
+          ente
           postfix
           monitoring
           inputs.sops-nix.nixosModules.sops
@@ -117,15 +118,15 @@ localFlake:
             #   keyFile = config.sops.templates."oauth2-proxy-keyfile".path;
             # };
 
-            services.grocy = {
-              enable = true;
-              hostName = "grocy.${config.networking.fqdn}";
-              nginx.enableSSL = true;
-              settings = {
-                currency = "INR";
-                culture = "en_GB";
-              };
-            };
+            # services.grocy = {
+            #   enable = true;
+            #   hostName = "grocy.${config.networking.fqdn}";
+            #   nginx.enableSSL = true;
+            #   settings = {
+            #     currency = "INR";
+            #     culture = "en_GB";
+            #   };
+            # };
 
             # environment.etc."grocy/config.php".text = ''
             #   Setting('AUTH_CLASS', 'Grocy\Middleware\ReverseProxyAuthMiddleware');
