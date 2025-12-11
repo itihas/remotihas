@@ -25,6 +25,7 @@ localFlake:
             }];
           };
         };
+
       };
     };
   };
@@ -44,10 +45,10 @@ localFlake:
           myFormats
           itihas
           isso
+          ente
           hedgedoc
           outline
           disko
-          ente
           postfix
           monitoring
           inputs.sops-nix.nixosModules.sops
@@ -164,20 +165,19 @@ localFlake:
                 metrics_listen_addr = "127.0.0.1:8081";
                 dns = {
                   magic_dns = true;
-                  nameservers.global = [
-                    "9.9.9.9"
-                    "1.1.1.1"
-                    "8.8.8.8"
-                  ];
+                  nameservers.global = [ "9.9.9.9" "1.1.1.1" "8.8.8.8" ];
                   base_domain = "itihas.internal";
                 };
               };
             };
             services.prometheus.scrapeConfigs = [{
               job_name = "headscale";
-              static_configs = [{ targets = [ config.services.headscale.settings.metrics_listen_addr ]; }];
+              static_configs = [{
+                targets =
+                  [ config.services.headscale.settings.metrics_listen_addr ];
+              }];
             }];
-            
+
             services.nginx.virtualHosts."headscale.${config.networking.fqdn}" =
               {
                 forceSSL = true;
@@ -205,9 +205,8 @@ localFlake:
               recommendedGzipSettings = true;
               recommendedOptimisation = true;
               recommendedProxySettings = true;
-              recommendedTlsSettings = true;
-              sslCiphers = "AES256+EECDH:AES256+EDH:!aNULL";
-
+              recommendedTlsSettings =
+                false; # mostly reproduced in commonHttpConfig
               commonHttpConfig = let
                 realIpsFromList = lib.strings.concatMapStringsSep "\n"
                   (x: "set_real_ip_from  ${x};");
@@ -224,9 +223,19 @@ localFlake:
                     "1ad09hijignj6zlqvdjxv7rjj8567z357zfavv201b9vx3ikk7cy";
                 });
               in ''
-                ${realIpsFromList cfipv4}
-                ${realIpsFromList cfipv6}
+                  ${realIpsFromList cfipv4}
+                  ${realIpsFromList cfipv6}
                 real_ip_header CF-Connecting-IP;
+
+                # reproducing recommendedTlsSettings here with just the ssl_conf_command directive commented out.
+                # ssl_conf_command Groups "X25519MLKEM768:X25519:P-256:P-384";
+                ssl_session_timeout 1d;
+                ssl_session_cache shared:SSL:10m;
+                # Breaks forward secrecy: https://github.com/mozilla/server-side-tls/issues/135
+                ssl_session_tickets off;
+                # We don't enable insecure ciphers by default, so this allows
+                # clients to pick the most performant, per https://github.com/mozilla/server-side-tls/issues/260
+                ssl_prefer_server_ciphers off;
               '';
 
               virtualHosts.${config.services.privatebin.virtualHost} = {

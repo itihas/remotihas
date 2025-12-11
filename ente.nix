@@ -24,10 +24,21 @@ localFlake:
               host = "/run/postgresql";
               user = name;
               inherit name;
-              password = "blajh";
             };
-            s3 = { are_local_buckets = false; };
+            s3 = {
+              are_local_buckets = false;
+              b2-eu-cen = {
+                bucket = "bucketihas";
+                region = "hel1";
+                endpoint = "hel1.your-objectstorage.com";
+              };
+            };
             credentials-file = config.sops.secrets."ente.yaml".path;
+            log-file = "/var/log/ente/ente.log";
+            internal = {
+              admin = "1580559962386439";
+              disable-registration = true;
+            };
           };
         };
 
