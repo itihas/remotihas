@@ -19,9 +19,12 @@ localFlake:
           nginx.enable = true;
           domain = "${name}.${config.networking.fqdn}";
           port = 6060;
+          credentialsFile = config.sops.secrets."ente.yaml".path;
           museumExtraConfig = {
+            log-file = "/var/log/ente/ente.log";
             db = {
               host = "/run/postgresql";
+              port = 5432;
               user = name;
               inherit name;
             };
@@ -33,10 +36,8 @@ localFlake:
                 endpoint = "hel1.your-objectstorage.com";
               };
             };
-            credentials-file = config.sops.secrets."ente.yaml".path;
-            log-file = "/var/log/ente/ente.log";
             internal = {
-              admin = "1580559962386439";
+              admin = "1580559962386442";
               disable-registration = true;
             };
           };

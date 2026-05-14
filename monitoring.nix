@@ -23,6 +23,7 @@ localFlake:
             "https://${config.services.grafana.settings.server.domain}/";
         };
 
+        settings.security.secret_key = "SW2YcwTIb9zpOOhoPsMm";
         settings."auth.generic_oauth" = {
           enabled = true;
           allow_sign_up = true;

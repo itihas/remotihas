@@ -1,59 +1,84 @@
 localFlake:
 
-{ lib, config, self, inputs, withSystem, ... }: {
-  flake.nixosModules.disko = { config, pkgs, ... }: {
-    imports = [ inputs.disko.nixosModules.disko ];
-    disko.devices = {
-      disk = {
-        main = {
-          type = "disk";
-          device = "/dev/sda";
-          content = {
-            type = "table";
-            format = "msdos";
-            partitions = [{
-              part-type = "primary";
-              fs-type = "btrfs";
-              name = "root";
-              bootable = true;
-              content = {
-                type = "btrfs";
-                extraArgs = [ "-f" ]; # Override existing partition
-                mountpoint = "/";
-                mountOptions = [ "compress=zstd" "noatime" ];
-              };
-            }];
+{
+  lib,
+  config,
+  self,
+  inputs,
+  withSystem,
+  ...
+}:
+{
+  flake.nixosModules.disko =
+    { config, pkgs, ... }:
+    {
+      imports = [ inputs.disko.nixosModules.disko ];
+      disko.devices = {
+        disk = {
+          main = {
+            type = "disk";
+            device = "/dev/sda";
+            content = {
+              type = "table";
+              format = "msdos";
+              partitions = [
+                {
+                  part-type = "primary";
+                  fs-type = "btrfs";
+                  name = "root";
+                  bootable = true;
+                  content = {
+                    type = "btrfs";
+                    extraArgs = [ "-f" ]; # Override existing partition
+                    mountpoint = "/";
+                    mountOptions = [
+                      "compress=zstd"
+                      "noatime"
+                    ];
+                  };
+                }
+              ];
+            };
           };
-        };
 
+        };
       };
     };
-  };
 
-  flake.nixosConfigurations.remotihas = withSystem "x86_64-linux"
-    ({ config, system, ... }:
-      inputs.nixpkgs.lib.nixosSystem {
-        modules = with self.nixosModules; [
-          ({ modulesPath, ... }: {
+  flake.nixosConfigurations.remotihas = withSystem "x86_64-linux" (
+    { config, system, ... }:
+    inputs.nixpkgs.lib.nixosSystem {
+      modules = with self.nixosModules; [
+        (
+          { modulesPath, ... }:
+          {
             imports = [
               (modulesPath + "/installer/scan/not-detected.nix")
               (modulesPath + "/profiles/qemu-guest.nix")
             ];
-          })
-          gitit
-          zitadel
-          myFormats
-          itihas
-          isso
-          ente
-          hedgedoc
-          outline
-          disko
-          postfix
-          monitoring
-          inputs.sops-nix.nixosModules.sops
-          inputs.nixos-facter-modules.nixosModules.facter
-          ({ config, lib, pkgs, ... }: {
+          }
+        )
+        gitit
+        zitadel
+        myFormats
+        itihas
+        isso
+        ente
+        hedgedoc
+        outline
+        disko
+        postfix
+        monitoring
+        inputs.sops-nix.nixosModules.sops
+        inputs.nixos-facter-modules.nixosModules.facter
+        (
+          {
+            config,
+            lib,
+            pkgs,
+            ...
+          }:
+          {
 
             networking.useDHCP = lib.mkDefault true;
             nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
@@ -138,6 +163,78 @@ localFlake:
             #     fastcgi_param REMOTE_USER $user;
             #   '';
 
+            sops.secrets."vikunja/oidcClientSecret" = { };
+            sops.secrets."vikunja/postgresPassword" = { };
+            sops.templates."vikunja-secrets" = {
+              content = ''
+                VIKUNJA_AUTH_OPENID_PROVIDERS_authihas_CLIENTSECRET=${
+                  config.sops.placeholder."vikunja/oidcClientSecret"
+                }
+                VIKUNJA_DATABASE_PASSWORD=${config.sops.placeholder."vikunja/postgresPassword"}
+              '';
+            };
+
+            services.postgresql = {
+              ensureUsers = [
+                {
+                  name = "vikunja";
+                  ensureDBOwnership = true;
+                }
+              ];
+              ensureDatabases = [ "vikunja" ];
+            };
+            services.vikunja = {
+              enable = true;
+              frontendScheme = "http";
+              frontendHostname = "vikunja.${config.networking.fqdn}";
+              port = 2044;
+              database = {
+                type = "postgres";
+                user = "vikunja";
+              };
+              environmentFiles = [ config.sops.templates."vikunja-secrets".path ];
+              settings = {
+                service = {
+                  enableregistration = false;
+                  enableemailreminders = true;
+                  maxavatarsize = 4096;
+                  jwtttl = 2592000;
+                  jwtttllong = 25920000;
+                  maxitemsperpage = 100;
+                };
+                auth = {
+                  local.enabled = false;
+                  openid = {
+                    enabled = true;
+                    providers = {
+                      authihas = {
+                        name = "authihas";
+                        authurl = "https://auth.${config.networking.fqdn}";
+                        clientid = "372878888193325701";
+                        scope = "openid profile email";
+                        forceuserinfo = false;
+                      };
+                    };
+                  };
+                };
+              };
+            };
+
+            services.nginx.virtualHosts."vikunja.${config.networking.fqdn}" = {
+              forceSSL = true;
+              enableACME = true;
+              locations."/" = {
+                proxyPass = "http://localhost:${toString config.services.vikunja.port}";
+                proxyWebsockets = true;
+                extraConfig = ''
+                  client_max_body_size 5000M;
+                  proxy_read_timeout   600s;
+                  proxy_send_timeout   600s;
+                  send_timeout         600s;
+                '';
+              };
+            };
+
             services.privatebin = {
               enable = true;
               enableNginx = true;
@@ -165,32 +262,42 @@ localFlake:
                 metrics_listen_addr = "127.0.0.1:8081";
                 dns = {
                   magic_dns = true;
-                  nameservers.global = [ "9.9.9.9" "1.1.1.1" "8.8.8.8" ];
+                  nameservers.global = [
+                    "9.9.9.9"
+                    "1.1.1.1"
+                    "8.8.8.8"
+                  ];
                   base_domain = "itihas.internal";
                 };
               };
             };
-            services.prometheus.scrapeConfigs = [{
-              job_name = "headscale";
-              static_configs = [{
-                targets =
-                  [ config.services.headscale.settings.metrics_listen_addr ];
-              }];
-            }];
-
-            services.nginx.virtualHosts."headscale.${config.networking.fqdn}" =
+            services.prometheus.scrapeConfigs = [
               {
-                forceSSL = true;
-                enableACME = true;
-                locations."/" = {
-                  proxyPass = "http://localhost:${
-                      toString config.services.headscale.port
-                    }";
-                  proxyWebsockets = true;
-                };
-              };
+                job_name = "headscale";
+                static_configs = [
+                  {
+                    targets = [ config.services.headscale.settings.metrics_listen_addr ];
+                  }
+                ];
+              }
+            ];
 
-            environment.systemPackages = [ config.services.headscale.package ];
+            services.nginx.virtualHosts."headscale.${config.networking.fqdn}" = {
+              forceSSL = true;
+              enableACME = true;
+              locations."/" = {
+                proxyPass = "http://localhost:${toString config.services.headscale.port}";
+                proxyWebsockets = true;
+              };
+            };
+
+            environment.systemPackages = with pkgs; [
+              config.services.headscale.package
+              vim
+              git
+              htop
+              wget
+            ];
 
             services.fail2ban.enable = true;
 
@@ -205,38 +312,39 @@ localFlake:
               recommendedGzipSettings = true;
               recommendedOptimisation = true;
               recommendedProxySettings = true;
-              recommendedTlsSettings =
-                false; # mostly reproduced in commonHttpConfig
-              commonHttpConfig = let
-                realIpsFromList = lib.strings.concatMapStringsSep "\n"
-                  (x: "set_real_ip_from  ${x};");
-                fileToList = x:
-                  lib.strings.splitString "\n" (builtins.readFile x);
-                cfipv4 = fileToList (pkgs.fetchurl {
-                  url = "https://www.cloudflare.com/ips-v4";
-                  sha256 =
-                    "0ywy9sg7spafi3gm9q5wb59lbiq0swvf0q3iazl0maq1pj1nsb7h";
-                });
-                cfipv6 = fileToList (pkgs.fetchurl {
-                  url = "https://www.cloudflare.com/ips-v6";
-                  sha256 =
-                    "1ad09hijignj6zlqvdjxv7rjj8567z357zfavv201b9vx3ikk7cy";
-                });
-              in ''
-                  ${realIpsFromList cfipv4}
-                  ${realIpsFromList cfipv6}
-                real_ip_header CF-Connecting-IP;
+              recommendedTlsSettings = false; # mostly reproduced in commonHttpConfig
+              commonHttpConfig =
+                let
+                  realIpsFromList = lib.strings.concatMapStringsSep "\n" (x: "set_real_ip_from  ${x};");
+                  fileToList = x: lib.strings.splitString "\n" (builtins.readFile x);
+                  cfipv4 = fileToList (
+                    pkgs.fetchurl {
+                      url = "https://www.cloudflare.com/ips-v4";
+                      sha256 = "0ywy9sg7spafi3gm9q5wb59lbiq0swvf0q3iazl0maq1pj1nsb7h";
+                    }
+                  );
+                  cfipv6 = fileToList (
+                    pkgs.fetchurl {
+                      url = "https://www.cloudflare.com/ips-v6";
+                      sha256 = "1ad09hijignj6zlqvdjxv7rjj8567z357zfavv201b9vx3ikk7cy";
+                    }
+                  );
+                in
+                ''
+                    ${realIpsFromList cfipv4}
+                    ${realIpsFromList cfipv6}
+                  real_ip_header CF-Connecting-IP;
 
-                # reproducing recommendedTlsSettings here with just the ssl_conf_command directive commented out.
-                # ssl_conf_command Groups "X25519MLKEM768:X25519:P-256:P-384";
-                ssl_session_timeout 1d;
-                ssl_session_cache shared:SSL:10m;
-                # Breaks forward secrecy: https://github.com/mozilla/server-side-tls/issues/135
-                ssl_session_tickets off;
-                # We don't enable insecure ciphers by default, so this allows
-                # clients to pick the most performant, per https://github.com/mozilla/server-side-tls/issues/260
-                ssl_prefer_server_ciphers off;
-              '';
+                  # reproducing recommendedTlsSettings here with just the ssl_conf_command directive commented out.
+                  # ssl_conf_command Groups "X25519MLKEM768:X25519:P-256:P-384";
+                  ssl_session_timeout 1d;
+                  ssl_session_cache shared:SSL:10m;
+                  # Breaks forward secrecy: https://github.com/mozilla/server-side-tls/issues/135
+                  ssl_session_tickets off;
+                  # We don't enable insecure ciphers by default, so this allows
+                  # clients to pick the most performant, per https://github.com/mozilla/server-side-tls/issues/260
+                  ssl_prefer_server_ciphers off;
+                '';
 
               virtualHosts.${config.services.privatebin.virtualHost} = {
                 forceSSL = true;
@@ -246,9 +354,15 @@ localFlake:
             };
 
             services.openssh.enable = true;
-            networking.firewall.allowedTCPPorts = [ 22 80 443 ];
-          })
-        ];
-      });
+            networking.firewall.allowedTCPPorts = [
+              22
+              80
+              443
+            ];
+          }
+        )
+      ];
+    }
+  );
 
 }
